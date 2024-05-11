@@ -20,8 +20,6 @@ const AccordionSection: React.FC = () => {
     return initialValue;
   });
 
-  console.log(accordionValues);
-
   const [editableAccordions, setEditableAccordions] = useState<boolean[]>([true, ...accordionData.accordions.map(() => false)]);
   const [formChanged, setFormChanged] = useState<boolean[]>(accordionData.accordions.map(() => false));
 
