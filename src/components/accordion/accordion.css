@@ -1,0 +1,18 @@
+.accordion-radio-options,
+.accordion-textfield {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.accordion-question {
+    margin: 20px;
+}
+
+.accordion-options-container {
+    display: flex;
+}
+
+.radio-options {
+    margin: 6px;
+}
