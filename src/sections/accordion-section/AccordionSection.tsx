@@ -4,21 +4,35 @@ import { accordionData, AccordionItem } from './constants';
 import { Accordion, Button } from 'react-bootstrap';
 import AccordionFormContent from '../../components/accordion/accordion-formcontent';
 
+interface AccordionData {
+  [accordionId: number]: { [questionIndex: number]: string };
+}
+
 const AccordionSection: React.FC = () => {
-  const [globalValue, setGlobalValue] = useState<string[]>(
-    accordionData.accordions.flatMap(accordion =>
-      accordion.children.map(child =>
-        child.type === "radio" ? "No" : ""
-      )
-    )
-  );
+  const [accordionValues, setAccordionValues] = useState<AccordionData>(() => {
+    const initialValue: AccordionData = {};
+    accordionData.accordions.forEach((accordion, accordionIndex) => {
+      initialValue[accordionIndex] = {};
+      accordion.children.forEach((child, childIndex) => {
+        initialValue[accordionIndex][childIndex] = child.type === "radio" ? "No" : "";
+      });
+    });
+    return initialValue;
+  });
+
+  console.log(accordionValues);
+
   const [editableAccordions, setEditableAccordions] = useState<boolean[]>([true, ...accordionData.accordions.map(() => false)]);
   const [formChanged, setFormChanged] = useState<boolean[]>(accordionData.accordions.map(() => false));
 
   const handleRadioChange = (accordionId: number, questionIndex: number, value: string) => {
-    const updatedGlobalValue = [...globalValue];
-    updatedGlobalValue[accordionId * accordionData.accordions[0].children.length + questionIndex] = value;
-    setGlobalValue(updatedGlobalValue);
+    setAccordionValues(prevValues => ({
+      ...prevValues,
+      [accordionId]: {
+        ...prevValues[accordionId],
+        [questionIndex]: value
+      }
+    }));
 
     setFormChanged(prev => {
       const updated = [...prev];
@@ -27,39 +41,36 @@ const AccordionSection: React.FC = () => {
     });
   };
 
-  const handleSave = (accordionId: number) => {
-    if (accordionId === accordionData.accordions.length - 1) {
+  const handleSave = (accordionIndex: number) => {
+    if (accordionIndex === accordionData.accordions.length - 1) {
       return;
     }
 
     const updatedEditableAccordions = [...editableAccordions];
+    const anyNoValue = Object.values(accordionValues[accordionIndex]).includes("No");
 
-    const accordionStartIndex = accordionId * accordionData.accordions[0].children.length;
-    const accordionEndIndex = accordionStartIndex + accordionData.accordions[accordionId].children.length;
-
-    const anyNoValue = globalValue.slice(accordionStartIndex, accordionEndIndex).includes("No");
-
-    if (anyNoValue) {
-      for (let i = accordionId + 1; i < updatedEditableAccordions.length; i++) {
+    for (let i = accordionIndex + 1; i < updatedEditableAccordions.length; i++) {
+      const anyNoValueNew = accordionValues[i - 1] && Object.values(accordionValues[i - 1]).includes("No");
+      if (anyNoValue || !anyNoValueNew) {
+        updatedEditableAccordions[i] = !anyNoValue;
+      } else {
         updatedEditableAccordions[i] = false;
       }
-    } else {
-      updatedEditableAccordions[accordionId + 1] = true;
     }
 
     setEditableAccordions(updatedEditableAccordions);
 
     setFormChanged(prev => {
       const updated = [...prev];
-      updated[accordionId] = false;
+      updated[accordionIndex] = false;
       return updated;
     });
   };
 
-  const renderSaveCancel = (accordionId: number) => {
+  const renderSaveCancel = (accordionIndex: number) => {
     return (
       <div>
-        <Button variant="primary" onClick={() => handleSave(accordionId)} className='m-2'>Save</Button>
+        <Button variant="primary" onClick={() => handleSave(accordionIndex)} className='m-2'>Save</Button>
         <Button variant="secondary">Cancel</Button>
       </div>
     );
